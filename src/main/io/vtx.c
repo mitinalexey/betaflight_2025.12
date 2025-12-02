@@ -139,7 +139,7 @@ STATIC_UNIT_TESTED vtxSettingsConfig_t vtxGetSettings(void)
 
 static bool vtxProcessBandAndChannel(vtxDevice_t *vtxDevice)
 {
-    if (!ARMING_FLAG(ARMED)) {
+    if ((!ARMING_FLAG(ARMED)) || (DISABLED_LOCK_ARMING_FLAG_VTX)) {
         uint8_t vtxBand;
         uint8_t vtxChan;
         if (vtxCommonGetBandAndChannel(vtxDevice, &vtxBand, &vtxChan)) {
@@ -156,7 +156,7 @@ static bool vtxProcessBandAndChannel(vtxDevice_t *vtxDevice)
 #if defined(VTX_SETTINGS_FREQCMD)
 static bool vtxProcessFrequency(vtxDevice_t *vtxDevice)
 {
-    if (!ARMING_FLAG(ARMED)) {
+    if ((!ARMING_FLAG(ARMED)) || (DISABLED_LOCK_ARMING_FLAG_VTX)) {
         uint16_t vtxFreq;
         if (vtxCommonGetFrequency(vtxDevice, &vtxFreq)) {
             const vtxSettingsConfig_t settings = vtxGetSettings();
@@ -188,7 +188,8 @@ static bool vtxProcessPitMode(vtxDevice_t *vtxDevice)
     static bool prevPmSwitchState = false;
 
     unsigned vtxStatus;
-    if (!ARMING_FLAG(ARMED) && vtxCommonGetStatus(vtxDevice, &vtxStatus)) {
+    uint8_t arming = ARMING_FLAG(ARMED) & (~DISABLED_LOCK_ARMING_FLAG_VTX);
+    if (!arming && vtxCommonGetStatus(vtxDevice, &vtxStatus)) {
         bool currPmSwitchState = IS_RC_MODE_ACTIVE(BOXVTXPITMODE);
 
         if (currPmSwitchState != prevPmSwitchState) {
@@ -277,7 +278,8 @@ void vtxUpdate(timeUs_t currentTimeUs)
             currentSchedule = (currentSchedule + 1) % VTX_PARAM_COUNT;
         } while (!vtxUpdatePending && currentSchedule != startingSchedule);
 
-        if (!ARMING_FLAG(ARMED) || vtxUpdatePending) {
+        uint8_t arming = ARMING_FLAG(ARMED) & (~DISABLED_LOCK_ARMING_FLAG_VTX);
+        if (!arming || vtxUpdatePending) {
             vtxCommonProcess(vtxDevice, currentTimeUs);
         }
     }
