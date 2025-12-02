@@ -38,3 +38,4 @@
 #include "target.h"
 #include "target/common_post.h"
 #include "target/common_defaults_post.h"
+#include "../config/configs/MITINF435N1/config.h"

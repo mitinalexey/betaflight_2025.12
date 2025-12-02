@@ -493,7 +493,7 @@ serialPort_t *usbVcpOpen(void)
 #endif
 
     crm_periph_clock_enable(OTG_CLOCK, TRUE);
-    usb_clock48m_select(USB_CLK_HEXT);
+    usb_clock48m_select(USB_CLK_HICK);
     nvic_irq_enable(OTG_IRQ, NVIC_PRIORITY_BASE(NVIC_PRIO_USB), NVIC_PRIORITY_SUB(NVIC_PRIO_USB));
 
     usbGenerateDisconnectPulse();

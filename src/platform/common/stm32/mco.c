@@ -79,6 +79,10 @@ static void mcoConfigure(MCODevice_e device, const mcoConfig_t *config)
         IOInit(io, OWNER_MCO, 1);
         HAL_RCC_MCOConfig(RCC_MCO, mcoSources[config->source], mcoDividers[config->divider]);
 #endif
+#if defined(AT32F4)
+        io = IOGetByTag(DEFIO_TAG_E(PA8));
+        IOInit(io, OWNER_MCO, 1);
+#endif
         break;
     case MCODEV_2: // MCO2 on PC9
 #if defined(STM32F4) || defined(STM32F7) || defined(APM32F4)
@@ -111,6 +115,9 @@ void mcoInit(void)
 #elif defined(STM32G4)
     // G4 only supports one MCO on PA8
     mcoConfigure(MCODEV_1, mcoConfig(MCODEV_1));
+#elif defined(AT32F4)
+    mcoConfigure(MCODEV_1, mcoConfig(MCODEV_1));
+    IOInit(IOGetByTag(DEFIO_TAG_E(PA8)), OWNER_MCO, 1);
 #else
 #error Unsupported MCU
 #endif

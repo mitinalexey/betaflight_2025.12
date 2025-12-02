@@ -529,7 +529,7 @@ static bool bbDecodeTelemetry(void)
 
     return true;
 }
-
+#include "flight/mtn.h"
 static void bbWriteInt(uint8_t motorIndex, uint16_t value)
 {
     bbMotor_t *const bbmotor = &bbMotors[motorIndex];
@@ -537,10 +537,13 @@ static void bbWriteInt(uint8_t motorIndex, uint16_t value)
     if (!bbmotor->configured) {
         return;
     }
+    if (bbmotor->protocolControl.requestTelemetry) {
+        mtn.debug.j++;
+    }
 
     // fetch requestTelemetry from motors. Needs to be refactored.
     motorDmaOutput_t * const motor = getMotorDmaOutput(motorIndex);
-    bbmotor->protocolControl.requestTelemetry = motor->protocolControl.requestTelemetry;
+    //bbmotor->protocolControl.requestTelemetry = motor->protocolControl.requestTelemetry;
     motor->protocolControl.requestTelemetry = false;
 
     // If there is a command ready to go overwrite the value and send that instead

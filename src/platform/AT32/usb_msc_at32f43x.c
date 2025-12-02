@@ -212,7 +212,7 @@ uint8_t mscStart(void)
 
     msc_usb_gpio_config();
     crm_periph_clock_enable(OTG_CLOCK, TRUE);
-    msc_usb_clock48m_select(USB_CLK_HEXT);
+    msc_usb_clock48m_select(USB_CLK_HICK);
     nvic_irq_enable(OTG_IRQ, NVIC_PRIORITY_BASE(NVIC_PRIO_USB), NVIC_PRIORITY_SUB(NVIC_PRIO_USB));
 
     usbd_init(&otg_core_struct,
