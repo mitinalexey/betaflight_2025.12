@@ -64,6 +64,7 @@
 #include "flight/position.h"
 #include "flight/rpm_filter.h"
 #include "flight/servos.h"
+#include "flight/mtn.h"
 
 #include "io/beeper.h"
 #include "io/dashboard.h"
@@ -158,6 +159,7 @@ const char * const lookupTableAccHardware[] = {
     "ICM42688P",
     "BMI160",
     "BMI270",
+    "QMI8658",
     "LSM6DSO",
     "LSM6DSV16X",
     "IIM42653",
@@ -186,6 +188,7 @@ const char * const lookupTableGyroHardware[] = {
     "ICM42688P",
     "BMI160",
     "BMI270",
+    "QMI8658",
     "LSM6DSO",
     "LSM6DSV16X",
     "IIM42653",
@@ -2005,6 +2008,14 @@ const clivalue_t valueTable[] = {
     { "box_user_2_name", VAR_UINT8 | HARDWARE_VALUE | MODE_STRING, .config.string = { 1, MAX_BOX_USER_NAME_LENGTH, STRING_FLAGS_NONE }, PG_MODE_ACTIVATION_CONFIG, offsetof(modeActivationConfig_t, box_user_names[1]) },
     { "box_user_3_name", VAR_UINT8 | HARDWARE_VALUE | MODE_STRING, .config.string = { 1, MAX_BOX_USER_NAME_LENGTH, STRING_FLAGS_NONE }, PG_MODE_ACTIVATION_CONFIG, offsetof(modeActivationConfig_t, box_user_names[2]) },
     { "box_user_4_name", VAR_UINT8 | HARDWARE_VALUE | MODE_STRING, .config.string = { 1, MAX_BOX_USER_NAME_LENGTH, STRING_FLAGS_NONE }, PG_MODE_ACTIVATION_CONFIG, offsetof(modeActivationConfig_t, box_user_names[3]) },
+#endif
+
+// PG_SE
+#ifdef USE_SHOCKSENSOR
+    { "se_test1", VAR_UINT16 | MASTER_VALUE, .config.minmaxUnsigned = { 0, 160 }, PG_SE_CONFIG, offsetof(seConfig_t, se_test1) },
+    { "shock_acc_thr", VAR_UINT16 | MASTER_VALUE, .config.minmaxUnsigned = { 0, 2000 }, PG_SE_CONFIG, offsetof(seConfig_t, shock_acc_thr) },
+    { "shock_delay_ms", VAR_UINT32 | MASTER_VALUE, .config.u32Max = UINT32_MAX, PG_SE_CONFIG, offsetof(seConfig_t, shock_delay_ms) },
+    { "shock_box_permanentid", VAR_UINT8 | MASTER_VALUE, .config.minmaxUnsigned = {0, 100}, PG_SE_CONFIG, offsetof(seConfig_t, shock_box_permanentid) },
 #endif
 
 #if defined(USE_GIMBAL)

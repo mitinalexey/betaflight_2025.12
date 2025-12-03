@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 #define DEBUG16_VALUE_COUNT 8
-extern int16_t debug[DEBUG16_VALUE_COUNT];
+extern float debug[DEBUG16_VALUE_COUNT];
 extern uint8_t debugMode;
 
 #define DEBUG_SET(mode, index, value) do { if (debugMode == (mode)) { debug[(index)] = (value); } } while (0)
@@ -129,6 +129,7 @@ typedef enum {
     DEBUG_CHIRP,
     DEBUG_FLASH_TEST_PRBS,
     DEBUG_MAVLINK_TELEMETRY,
+    DEBUG_SHOCK,
     DEBUG_COUNT
 } debugType_e;
 

@@ -600,7 +600,7 @@ static void showBBPage(void)
 static void showDebugPage(void)
 {
     for (int rowIndex = 0; rowIndex < 4; rowIndex++) {
-        tfp_sprintf(lineBuffer, "%d = %5d", rowIndex, debug[rowIndex]);
+        tfp_sprintf(lineBuffer, "%d = %5d", rowIndex, (int16_t)debug[rowIndex]);
         padLineBuffer();
         i2c_OLED_set_line(dev, rowIndex + PAGE_TITLE_LINE_COUNT);
         i2c_OLED_send_string(dev, lineBuffer);

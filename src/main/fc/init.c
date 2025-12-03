@@ -104,6 +104,7 @@
 #include "flight/position.h"
 #include "flight/pos_hold.h"
 #include "flight/servos.h"
+#include "flight/mtn.h"
 
 #include "io/asyncfatfs/asyncfatfs.h"
 #include "io/beeper.h"
@@ -707,6 +708,10 @@ void init(void)
 
 #ifdef USE_PINIOBOX
     pinioBoxInit(pinioBoxConfig());
+#endif
+
+#ifdef USE_SHOCKSENSOR
+    seShockInit();
 #endif
 
     LED1_ON;

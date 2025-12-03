@@ -34,6 +34,11 @@
 #include "pg/pinio.h"
 #include "pg/piniobox.h"
 
+#include "fc/runtime_config.h"
+#include "common/axis.h"
+#include "sensors/acceleration.h"
+#include "flight/mtn.h"
+
 #include "scheduler/scheduler.h"
 
 #include "piniobox.h"
@@ -55,14 +60,19 @@ void pinioBoxInit(const pinioBoxConfig_t *pinioBoxConfig)
     }
 }
 
+extern seShockValues_t Shock;
 void pinioBoxUpdate(timeUs_t currentTimeUs)
 {
     UNUSED(currentTimeUs);
 
     for (int i = 0; i < PINIO_COUNT; i++) {
         if (pinioBoxRuntimeConfig.boxId[i] != BOXID_NONE) {
-            pinioSet(i, getBoxIdState(pinioBoxRuntimeConfig.boxId[i]));
-        }
+			if (pinioBoxRuntimeConfig.boxId[i] == Shock.box->boxId) {
+				seShockSetEnable(i, pinioBoxRuntimeConfig.boxId[i]);
+			} else {
+				pinioSet(i, getBoxIdState(pinioBoxRuntimeConfig.boxId[i]));
+			}
+		}
     }
 }
 

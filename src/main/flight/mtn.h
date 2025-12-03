@@ -19,17 +19,63 @@
  */
 
 #pragma once
+// DEBUG VARIABLE
 #include "build/version.h"
-#include "drivers/io_types.h"
+
+// SHOCK SENSOR INCLUDE
+// FC_FIRMWARE_IDENTIFIER нет в INAV
+#ifndef FC_FIRMWARE_IDENTIFIER
+#define SE_INAV
+#else
+#define SE_BF
+#endif 
+
+#ifdef SE_BF
 #include "pg/pg.h"
+#include "pg/piniobox.h"
+#include "msp/msp_box.h"
+#endif 
 
-/*
-typedef enum {
-    QMI8658_REG_WHO_AM_I = 0x00,       // chip id, should be 0x05
-    QMI8658_REG_REVISION_ID = 0x01,    // chip revision, should be 0x7C
+#ifdef SE_INAV
+#include "config/parameter_group.h"
+#include "io/piniobox.h"
+#include "fc/fc_msp_box.h"
+#endif 
 
-} qmi8658Register_e;
-*/
+#include "drivers/io_types.h"
+
+// SHOCK SENSOR VARIABLE
+// configirated from cli command
+typedef struct seConfig_s {
+    uint16_t se_test1;
+    uint16_t shock_acc_thr;
+    uint32_t shock_delay_ms;
+    uint8_t shock_box_permanentid;
+} seConfig_t;
+
+PG_DECLARE(seConfig_t, seConfig);
+
+typedef struct seShockValues_s {
+    bool init;
+    bool enable;
+	float acc_thr;
+    float acc_max;
+    float accADC_max;
+    float GForce;
+    int pinio_index;
+    bool isOn;
+    uint32_t enableOnTick;
+    const box_t *box;
+    bool arm_isOn;
+    bool box_isOn;
+} seShockValues_t;
+
+void seShockInit(void);
+void seShockSetEnable(int pinio_index, boxId_e boxid);
+void seShockUpdate(float accADCf);
+uint8_t seShockGetBoxId(void);
+
+// DEBUG VARIABLE
 typedef struct mtnDebugStruct_s {
     bool requestTelemetry;
     uint32_t i, j;

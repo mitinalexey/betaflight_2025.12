@@ -980,12 +980,31 @@ static void osdElementCurrentDraw(osdElementParms_t *element)
 
 static void osdElementDebug(osdElementParms_t *element)
 {
-    tfp_sprintf(element->buff, "DBG %5d %5d %5d %5d", debug[0], debug[1], debug[2], debug[3]);
+        if (debugMode == DEBUG_SHOCK) {
+        char buffG[6];
+        char buffEN[3];
+        char buffPINIO[3];
+
+        if (debug[1]) {
+            tfp_sprintf(buffEN, "EN");
+        } else {
+            tfp_sprintf(buffEN, "DIS");
+        }
+        if (debug[2]) {
+            tfp_sprintf(buffPINIO, "ON");
+        } else {
+            tfp_sprintf(buffPINIO, "OFF");
+        }        
+        osdPrintFloat(buffG, SYM_NONE, debug[0] * 0.01f, "", 1, true, 'G');
+        tfp_sprintf(element->buff, "SHK %5s %5s %5s", buffG, buffEN, buffPINIO);
+    } else {
+        tfp_sprintf(element->buff, "DBG %5d %5d %5d %5d", (int16_t)debug[0], (int16_t)debug[1], (int16_t)debug[2], (int16_t)debug[3]);
+    }
 }
 
 static void osdElementDebug2(osdElementParms_t *element)
 {
-    tfp_sprintf(element->buff, "D2  %5d %5d %5d %5d", debug[4], debug[5], debug[6], debug[7]);
+    tfp_sprintf(element->buff, "D2  %5d %5d %5d %5d", (int16_t)debug[4], (int16_t)debug[5], (int16_t)debug[6], (int16_t)debug[7]);
 }
 
 static void osdElementDisarmed(osdElementParms_t *element)
