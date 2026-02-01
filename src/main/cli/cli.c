@@ -68,7 +68,7 @@ bool cliMode = false;
 #include "drivers/dma_reqmap.h"
 #include "drivers/dshot.h"
 #include "drivers/dshot_command.h"
-#include "drivers/camera_control_impl.h"
+#include "drivers/camera_control.h"
 #include "drivers/compass/compass.h"
 #include "drivers/display.h"
 #include "drivers/dma.h"
@@ -244,6 +244,7 @@ static const char * const featureNames[] = {
     _R(FEATURE_TELEMETRY, "TELEMETRY"),
     _R(FEATURE_3D, "3D"),
     _R(FEATURE_RX_PARALLEL_PWM, "RX_PARALLEL_PWM"),
+    _R(FEATURE_RX_MSP, "RX_MSP"),
     _R(FEATURE_RSSI_ADC, "RSSI_ADC"),
     _R(FEATURE_LED_STRIP, "LED_STRIP"),
     _R(FEATURE_DASHBOARD, "DISPLAY"),
@@ -961,6 +962,15 @@ static void cliRepeat(char ch, uint8_t len)
     }
 }
 #endif
+
+static char *skipSpace(char *buffer)
+{
+    while (*(buffer) == ' ') {
+        buffer++;
+    }
+
+    return buffer;
+}
 
 static void cliPrompt(void)
 {
@@ -2570,7 +2580,7 @@ static void cliFlashErase(const char *cmdName, char *cmdline)
     cliWriterFlush();
     flashfsEraseCompletely();
 
-    while (!flashfsIsReady()) {
+    while (!flashfsIsReady() && !flashfsIsEraseInProgress()) {
 #ifndef MINIMAL_CLI
         cliPrintf(".");
         if (i++ > 120) {
@@ -2603,11 +2613,12 @@ static void cliFlashVerify(const char *cmdName, char *cmdline)
 static void cliFlashWrite(const char *cmdName, char *cmdline)
 {
     const uint32_t address = atoi(cmdline);
-    const char *text = strchr(cmdline, ' ');
+    char *text = strchr(cmdline, ' ');
 
     if (!text) {
         cliShowInvalidArgumentCountError(cmdName);
     } else {
+        text = skipSpace(text + 1);
         flashfsSeekAbs(address);
         flashfsWrite((uint8_t*)text, strlen(text), true);
         flashfsFlushSync();
@@ -3561,15 +3572,6 @@ static void cliMap(const char *cmdName, char *cmdline)
     cliPrintLinef("map %s", buf);
 }
 
-static char *skipSpace(char *buffer)
-{
-    while (*(buffer) == ' ') {
-        buffer++;
-    }
-
-    return buffer;
-}
-
 static char *checkCommand(char *cmdline, const char *command)
 {
     if (!strncasecmp(cmdline, command, strlen(command))   // command names match
@@ -3665,9 +3667,26 @@ static void cliGpsPassthrough(const char *cmdName, char *cmdline)
 #if defined(USE_GYRO_REGISTER_DUMP) && !defined(SIMULATOR_BUILD)
 static void cliPrintGyroRegisters(uint8_t whichSensor)
 {
-    cliPrintLinef("# WHO_AM_I    0x%X", gyroReadRegister(whichSensor, MPU_RA_WHO_AM_I));
-    cliPrintLinef("# CONFIG      0x%X", gyroReadRegister(whichSensor, MPU_RA_CONFIG));
-    cliPrintLinef("# GYRO_CONFIG 0x%X", gyroReadRegister(whichSensor, MPU_RA_GYRO_CONFIG));
+#if defined(USE_ACCGYRO_ICM45686) || defined(USE_ACCGYRO_ICM45605)
+    // ICM-456xx uses different register addresses than MPU/ICM-426xx sensors
+    // Register 0x75 (MPU_RA_WHO_AM_I) is RESERVED on ICM-456xx
+    const mpuDetectionResult_t *mpuDetection = gyroMpuDetectionResult();
+    
+    if (mpuDetection->sensor == ICM_45686_SPI || mpuDetection->sensor == ICM_45605_SPI) {
+        // ICM-456xx register addresses (from DS-000577 datasheet)
+        cliPrintLinef("# WHO_AM_I      0x%X (0x72)", gyroReadRegister(whichSensor, 0x72));  // Should be 0xE9 or 0xE5
+        cliPrintLinef("# PWR_MGMT0     0x%X (0x10)", gyroReadRegister(whichSensor, 0x10));
+        cliPrintLinef("# GYRO_CONFIG0  0x%X (0x1C)", gyroReadRegister(whichSensor, 0x1C));
+        cliPrintLinef("# ACCEL_CONFIG0 0x%X (0x1B)", gyroReadRegister(whichSensor, 0x1B));
+        cliPrintLinef("# INT1_STATUS0  0x%X (0x19)", gyroReadRegister(whichSensor, 0x19));
+    } else
+#endif
+    {
+        // Standard MPU/ICM-426xx register addresses
+        cliPrintLinef("# WHO_AM_I    0x%X", gyroReadRegister(whichSensor, MPU_RA_WHO_AM_I));
+        cliPrintLinef("# CONFIG      0x%X", gyroReadRegister(whichSensor, MPU_RA_CONFIG));
+        cliPrintLinef("# GYRO_CONFIG 0x%X", gyroReadRegister(whichSensor, MPU_RA_GYRO_CONFIG));
+    }
 }
 
 static void cliDumpGyroRegisters(const char *cmdName, char *cmdline)
@@ -5291,7 +5310,8 @@ static bool strToPin(char *ptr, ioTag_t *tag)
         return true;
     } else {
         const unsigned port = (*ptr >= 'a') ? *ptr - 'a' : *ptr - 'A';
-        if (port < 8) {
+        // Ports A through I
+        if (port < 9) {
             ptr++;
 
             char *end;

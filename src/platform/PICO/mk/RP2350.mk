@@ -374,8 +374,11 @@ SYS_INCLUDE_DIRS += \
 #Flags
 ARCH_FLAGS      = -mthumb -mcpu=cortex-m33 -march=armv8-m.main+fp+dsp -mcmse -mfloat-abi=softfp
 ARCH_FLAGS      += -DPICO_COPY_TO_RAM=$(RUN_FROM_RAM)
-# work around memcpy alignment issue
-ARCH_FLAGS      += -fno-builtin-memcpy
+
+# Work around memcpy alignment issue: compiler to generate function calls
+# rather than inlining code that is sometimes broken.
+# (Calls to memcpy, memset become calls to performant wrapped versions.)
+ARCH_FLAGS      += -fno-builtin-memcpy -fno-builtin-memset
 
 PICO_STDIO_USB_FLAGS = \
             -DLIB_PICO_PRINTF=1 \
@@ -405,7 +408,18 @@ PICO_STDIO_LD_FLAGS = $(foreach fn, $(PICO_STDIO_WRAP_FNS), -Wl,--wrap=$(fn))
 PICO_BIT_OPS_LD_FLAGS = \
             -Wl,--wrap=__ctzdi2
 
-EXTRA_LD_FLAGS += $(PICO_STDIO_LD_FLAGS) $(PICO_TRACE_LD_FLAGS) $(PICO_FLOAT_LD_FLAGS) $(PICO_DOUBLE_LD_FLAGS) $(PICO_BIT_OPS_LD_FLAGS)
+PICO_LIB_SRC += \
+            PICO/memfunctions.S
+
+PICO_MEM_WRAP_FNS = \
+            memcpy_44 \
+            memcpy \
+            memset_4 \
+            memset
+
+PICO_MEM_LD_FLAGS = $(foreach fn, $(PICO_MEM_WRAP_FNS), -Wl,--wrap=$(fn))
+
+EXTRA_LD_FLAGS += $(PICO_STDIO_LD_FLAGS) $(PICO_TRACE_LD_FLAGS) $(PICO_FLOAT_LD_FLAGS) $(PICO_DOUBLE_LD_FLAGS) $(PICO_BIT_OPS_LD_FLAGS) $(PICO_MEM_LD_FLAGS)
 
 ifdef RP2350_TARGET
 
@@ -461,15 +475,14 @@ DEVICE_FLAGS    += \
             -DPICO_NO_HARDWARE=0 \
             -DPICO_ON_DEVICE=1 \
             -DPICO_RP2350=1 \
-            -DPICO_USE_BLOCKED_RAM=0
+            -DPICO_USE_BLOCKED_RAM=0 \
+            -DPICO_CORE1_STACK_SIZE=0x1000
 
 ifeq ($(RUN_FROM_RAM),1)
 LD_SCRIPT       = $(LINKER_DIR)/pico_rp2350_RunFromRAM.ld
 else
 LD_SCRIPT       = $(LINKER_DIR)/pico_rp2350_RunFromFLASH.ld
 endif
-
-STARTUP_SRC     = PICO/startup/bs2_default_padded_checksummed.S
 
 # Override the OPTIMISE_SPEED compiler setting to save flash space on these 512KB targets.
 # Performance is only slightly affected but around 50 kB of flash are saved.
@@ -540,7 +553,8 @@ MCU_COMMON_SRC = \
             PICO/exti_pico.c \
             PICO/io_pico.c \
             PICO/persistent.c \
-            PICO/pwm_pico.c \
+            PICO/pwm_motor_pico.c \
+            PICO/pwm_servo_pico.c \
             PICO/pwm_beeper_pico.c \
             PICO/serial_usb_vcp_pico.c \
             PICO/system.c \

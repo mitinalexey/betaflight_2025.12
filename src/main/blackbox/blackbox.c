@@ -310,7 +310,10 @@ static const blackboxConditionalFieldDefinition_t blackboxGpsGFields[] = {
     {"GPS_coord",          1, SIGNED,   PREDICT(HOME_COORD), ENCODING(SIGNED_VB),   CONDITION(ALWAYS)},
     {"GPS_altitude",      -1, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB),   CONDITION(ALWAYS)},
     {"GPS_speed",         -1, UNSIGNED, PREDICT(0),          ENCODING(UNSIGNED_VB), CONDITION(ALWAYS)},
-    {"GPS_ground_course", -1, UNSIGNED, PREDICT(0),          ENCODING(UNSIGNED_VB), CONDITION(ALWAYS)}
+    {"GPS_ground_course", -1, UNSIGNED, PREDICT(0),          ENCODING(UNSIGNED_VB), CONDITION(ALWAYS)},
+    {"GPS_velned",         0, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB),   CONDITION(ALWAYS)},
+    {"GPS_velned",         1, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB),   CONDITION(ALWAYS)},
+    {"GPS_velned",         2, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB),   CONDITION(ALWAYS)},
 };
 
 // GPS home frame
@@ -1226,6 +1229,10 @@ static void writeGPSFrame(timeUs_t currentTimeUs)
 
     blackboxWriteUnsignedVB(gpsSol.groundCourse);
 
+    blackboxWriteSignedVB(gpsSol.velned.velN);
+    blackboxWriteSignedVB(gpsSol.velned.velE);
+    blackboxWriteSignedVB(gpsSol.velned.velD);
+
     gpsHistory.GPS_numSat = gpsSol.numSat;
     gpsHistory.GPS_coord = gpsSol.llh;
 }
@@ -1945,11 +1952,11 @@ static void blackboxCheckAndLogFlightMode(void)
 {
     // Use != so that we can still detect a change if the counter wraps
     if (memcmp(&rcModeActivationMask, &blackboxLastFlightModeFlags, sizeof(blackboxLastFlightModeFlags))) {
-        flightLogEvent_flightMode_t eventData; // Add new data for current flight mode flags
-        eventData.lastFlags = blackboxLastFlightModeFlags;
+        flightLogEventData_t eventData; // Add new data for current flight mode flags
+        eventData.flightMode.lastFlags = blackboxLastFlightModeFlags;
         memcpy(&blackboxLastFlightModeFlags, &rcModeActivationMask, sizeof(blackboxLastFlightModeFlags));
-        memcpy(&eventData.flags, &rcModeActivationMask, sizeof(eventData.flags));
-        blackboxLogEvent(FLIGHT_LOG_EVENT_FLIGHTMODE, (flightLogEventData_t *)&eventData);
+        memcpy(&eventData.flightMode.flags, &rcModeActivationMask, sizeof(eventData.flightMode.flags));
+        blackboxLogEvent(FLIGHT_LOG_EVENT_FLIGHTMODE, &eventData);
     }
 }
 
