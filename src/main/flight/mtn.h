@@ -43,6 +43,7 @@
 #endif 
 
 #include "drivers/io_types.h"
+#include "sensors/esc_sensor.h"
 
 // SHOCK SENSOR VARIABLE
 // configirated from cli command
@@ -80,6 +81,7 @@ typedef struct mtnDebugStruct_s {
     bool requestTelemetry;
     uint32_t i, j;
     uint8_t lastBucketIndex;
+    escSensorData_t* escData[4];
 }  mtnDebugStruct_t;
 
 typedef struct mtnBaseStruct_s {

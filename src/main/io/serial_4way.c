@@ -143,7 +143,7 @@ inline void setEscOutput(uint8_t selEsc)
 
 uint8_t esc4wayInit(void)
 {
-    motorShutdown();
+   // motorShutdown();
     uint8_t escIndex = 0;
 
     memset(&escHardware, 0, sizeof(escHardware));
