@@ -982,7 +982,7 @@ void initPhase3(void)
 #ifdef USE_MOTOR
     motorPostInit();
     motorEnable();
-    delay(3000); // delay for the waiting init AM32 ESC
+    // delay(3000); // delay for the waiting init AM32 ESC
 #endif
 
 // allocate SPI DMA streams after motor timers as SPI DMA allocate will always be possible
